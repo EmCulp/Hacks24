@@ -1,11 +1,3 @@
-/*
- * Created by ArduinoGetStarted.com
- *
- * This example code is in the public domain
- *
- * Tutorial page: https://arduinogetstarted.com/tutorials/arduino-rfid-nfc
- */
-
 #include <SPI.h>
 #include <MFRC522.h>
 
@@ -14,51 +6,58 @@
 
 MFRC522 rfid(SS_PIN, RST_PIN);
 
+bool isDocked = false;
+unsigned long lastDetectedMillis = 0;
+const long dockedDuration = 2000; // Duration for docked state
+
 void setup() {
   Serial.begin(9600);
-  Serial.println("Starting setup...");
   SPI.begin();
-  
-  // // Self-test
-  // Serial.println("Performing self-test...");
-  // if (!rfid.PCD_PerformSelfTest()) {
-  //   Serial.println("RFID module failed self-test. Check connections and power.");
-  //   while (true); // Stop if self-test fails
-  // }
-  
-  Serial.println("Initializing RFID reader...");
   rfid.PCD_Init();
   Serial.println("RFID reader initialized. Tap card on reader.");
 }
 
-
-
 void loop() {
-  Serial.println("Checking for new card...");
-  if (rfid.PICC_IsNewCardPresent()) { 
-    Serial.println("Card detected!");
+  unsigned long currentMillis = millis();
 
-    if (rfid.PICC_ReadCardSerial()) { 
-      Serial.println("UID read successfully:");
-      MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
-
-      Serial.print("UID:");
-      for (int i = 0; i < rfid.uid.size; i++) {
-        Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
-        Serial.print(rfid.uid.uidByte[i], HEX);
-      }
-      Serial.println();
-
-      rfid.PICC_HaltA(); 
-      rfid.PCD_StopCrypto1();
+  // Check if a new card is present
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    // Card detected for the first time or continuously
+    if (!isDocked) {
+      // First detection
+      Serial.println("Card detected! UID:");
+      printUID();
+      isDocked = true; // Update state to docked
+      lastDetectedMillis = currentMillis; // Update time
+    } else {
+      // Card is still present
+      Serial.print("Card is still present. UID: ");
+      printUID();
+      lastDetectedMillis = currentMillis; // Update time
     }
-    docked();
-    return;
   } else {
-    Serial.println("No card present.");
+    // If the card is not new and it was docked, check for removal
+    if (isDocked) {
+      // Check if the docked duration has passed
+      if (currentMillis - lastDetectedMillis > dockedDuration) {
+        Serial.println("Card removed, stopping UID print.");
+        isDocked = false; // Update state to not docked
+      } else {
+        // Card is still detected but not new
+        Serial.println("Card present, within docked duration.");
+      }
+    } else {
+      Serial.println("No card present.");
+    }
   }
-  delay(5000); // Add a delay to avoid spamming the Serial Monitor
+
+  delay(1000); // Control the loop frequency
 }
 
-void docked(){
+void printUID() {
+  for (int i = 0; i < rfid.uid.size; i++) {
+    Serial.print(rfid.uid.uidByte[i] < 0x10 ? " 0" : " ");
+    Serial.print(rfid.uid.uidByte[i], HEX);
+  }
+  Serial.println();
 }
