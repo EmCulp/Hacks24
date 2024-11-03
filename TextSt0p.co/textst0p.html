@@ -7,15 +7,30 @@
 		<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.css">
 		<script src="https://cdn.jsdelivr.net/npm/fomantic-ui@2.8.8/dist/semantic.min.js"></script>
 		<link rel="stylesheet" href="textst0p.css"/>
+		<script>
+			// Changing the contents and properties of HTML elements
+			
+		</script>
 </head>
-<body>
+<script src="./textst0p.js"></script>
+<script src="server.js"></script>
+<body onload="start()">
 	<div class="ui top fixed menu">
 		<a class="item" href="textst0p.html">Home</a>
 		<a class="item" href="textst0p_about.html">About</a>
 	</div>
 	<h1>TextSt0p</h1>
-	<div>
-		<a href="#" id="push2start"><img src="./Media/kisspng-car-honda-button-engine-ignition-switch-button-white-5b49eb48112ae8.2860314015315710160703.png"></a>
+	<div style="width: 25%; margin: 0 auto; margin-bottom: 15px;" id="access" class="docked ui raised segment" >
+	</div>
+	<div class="row">
+		<div class="column_but">
+			<!--<input type="image" id="push2start" src="./Media/p2s.png" />-->
+			<button onclick="button()" id="push2start"></button>
+		</div>
+		<div class="column" style="background-color: red;">
+			<p>filler text</p>
+		</div>
+		
 	</div>
 	
 	<div class='footer-divide'></div>
