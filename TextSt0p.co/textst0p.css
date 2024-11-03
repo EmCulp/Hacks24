@@ -38,6 +38,22 @@ div.footer-divide {
 	text-align: left !important;
 }
 
+.column_but {
+  float: left;
+  width: 20%;
+}
+
+.column {
+  float: left;
+  width: 80%;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}         
+
 #socials img {
 	transition: 1s;
 	width: 50px;
@@ -48,15 +64,20 @@ div.footer-divide {
 	width: 70px;
 }
 
-#push2start img {
+#push2start {
   transition: 0.5s;
+  background-image: url('./Media/p2s.png');
+  background-size: 135px 135px;
+  border-radius: 50%;
   width: 135px;
-  margin: 20px 20px 20px 50px;
+  height: 135px;
 }
 
-#push2start img:active {
+#push2start:active {
   transition: 1s;
+  background-size: 115px 115px;
   width: 115px;
+  height: 115px;
 }
 
 * {box-sizing:border-box}
