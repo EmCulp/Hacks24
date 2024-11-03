@@ -1,6 +1,5 @@
 #include <SPI.h>
 #include <MFRC522.h>
-#include <SoftwareSerial.h>
 
 #define SS_PIN 53
 #define RST_PIN 5
@@ -10,24 +9,24 @@ MFRC522 rfid(SS_PIN, RST_PIN);
 bool isDocked = false;
 unsigned long lastDetectedMillis = 0;
 const long dockedDuration = 2000; // Duration for docked state
-// SoftwareSerial espSerial(18, 19);
 
 void setup() {
   Serial.begin(9600);
-  Serial1.begin(9600);  //communication with esp8266
-  // espSerial.begin(9600);
+  Serial1.begin(9600);  // communication with esp8266
 
   SPI.begin();
   rfid.PCD_Init();
   Serial.println("RFID reader initialized. Tap card on reader.");
 
-  initializeESP();
+  initializeWiFi();
+  checkConnection();
+  Serial.println("Connected to WiFi");
 }
 
 void loop() {
   if (Serial1.available()) {
       char c = Serial1.read();
-      Serial.print(c);  // Print to the Serial Monitor
+      Serial.println(c);  // Print to the Serial Monitor
   }
 
   unsigned long currentMillis = millis();
@@ -65,6 +64,7 @@ void loop() {
   }
 
   checkForClientRequest();
+  Serial.println("done...");
   delay(1000); // Control the loop frequency
 }
 
@@ -76,23 +76,41 @@ void printUID() {
   Serial.println();
 }
 
-// Initialize ESP8266
-void initializeESP(){
+// Initialize Wi-Fi connection
+void initializeWiFi() {
   Serial1.println("AT+RST"); // Reset ESP8266
   delay(2000);
+  
   Serial1.println("AT+CWMODE=2"); // Set to access point mode
   delay(1000);
-  Serial1.println("AT+CIFSR"); // Check IP address
+  
+  Serial1.println("AT+CWJAP=\"YCP-Hacks\",\"Hacks2024\",5"); // Connect to Wi-Fi
+  delay(5000); // Wait for connection
+
+  // Check if connected
+  Serial1.println("AT+CWJAP?");
   delay(1000);
-  Serial1.println("AT+CIPMUX=1"); // Enable multiple connections
+  while (Serial1.available()) {
+    Serial.write(Serial1.read()); // Print any response
+  }
+
+  Serial1.println("AT+CIFSR"); // Get IP address
   delay(1000);
-  Serial1.println("AT+CIPSERVER=1,80"); // Start server on port 80
+  while (Serial1.available()) {
+    Serial.write(Serial1.read()); // Print the IP address
+  }
+  
+  Serial1.println("AT+CIPSERVER=1,80"); // Start server
   delay(1000);
+  while (Serial1.available()) {
+    Serial.write(Serial1.read()); // Print response from server start command
+  }
 }
 
 void checkForClientRequest() {
   if (Serial1.available()) {
     String request = Serial1.readStringUntil('\r');
+    Serial1.read();
     if (request.indexOf("GET / ") >= 0) {
       sendHttpResponse(isDocked ? "Docked" : "Not Docked");
     }
@@ -101,9 +119,25 @@ void checkForClientRequest() {
 
 // Function to send HTTP response
 void sendHttpResponse(String message) {
-  Serial1.println("AT+CIPSEND=0," + String(message.length() + 4));
+  Serial1.print("AT+CIPSEND=");
+  Serial1.print(message.length() + 4); // Length of message + 4 for headers
+  Serial1.println();
   delay(100);
-  Serial1.println(message);
+  
+  Serial1.println("HTTP/1.1 200 OK"); // Send HTTP status line
+  Serial1.println("Content-Type: text/plain"); // Specify content type
+  Serial1.println(); // End headers
+  Serial1.println(message); // Send the message body
   delay(100);
-  Serial1.println("AT+CIPCLOSE=0");
+  
+  Serial1.println("AT+CIPCLOSE"); // Close the connection
+}
+
+void checkConnection(){
+  Serial1.println("AT+CWJAP?"); // check if connected to wifi
+  delay(1000);
+
+  while(Serial1.available()){
+    Serial.write(Serial1.read());
+  }
 }
