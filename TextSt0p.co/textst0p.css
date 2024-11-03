@@ -48,6 +48,17 @@ div.footer-divide {
 	width: 70px;
 }
 
+#push2start img {
+  transition: 0.5s;
+  width: 135px;
+  margin: 20px 20px 20px 50px;
+}
+
+#push2start img:active {
+  transition: 1s;
+  width: 115px;
+}
+
 * {box-sizing:border-box}
 
 .slideshow-container {
@@ -66,8 +77,8 @@ div.footer-divide {
   top: 50%;
   width: auto;
   margin-top: -22px;
-  margin-left: ;
-  margin-right: ;
+  margin-left: 0;
+  margin-right: 0;
   padding: 16px;
   color: black;
   font-weight: bold;
