@@ -1,10 +1,14 @@
 #include <SPI.h>
 #include <MFRC522.h>
+#include <LiquidCrystal.h>
 
 #define SS_PIN 53
 #define RST_PIN 5
 
 MFRC522 rfid(SS_PIN, RST_PIN);
+
+//update the pin for D4 from the pin 5 to pin 8
+LiquidCrystal lcd(12, 11, 8, 4, 3, 2);
 
 bool isDocked = false;
 unsigned long lastDetectedMillis = 0;
@@ -18,12 +22,21 @@ void setup() {
   rfid.PCD_Init();
   Serial.println("RFID reader initialized. Tap card on reader.");
 
+  //lcd set up
+  lcd.begin(16, 2);
+  lcd.print("NFC System Ready");
+  delay(2000);
+  lcd.clear();
+
   initializeWiFi();
   checkConnection();
   Serial.println("Connected to WiFi");
 }
 
 void loop() {
+  bool nfcDetected = false; //will replace with actual NFC status
+  bool phoneOnNFC = false;  //replace with actual NFC phone status
+
   if (Serial1.available()) {
       char c = Serial1.read();
       Serial.println(c);  // Print to the Serial Monitor
@@ -33,6 +46,7 @@ void loop() {
 
   // Check if a new card is present
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    nfcDetected = true;
     // Card detected for the first time or continuously
     if (!isDocked) {
       // First detection
@@ -49,22 +63,34 @@ void loop() {
   } else {
     // If the card is not new and it was docked, check for removal
     if (isDocked) {
-      Serial.println("is present and not new isDocked");
-      // Check if the docked duration has passed
       if (currentMillis - lastDetectedMillis > dockedDuration) {
         Serial.println("Card removed, stopping UID print.");
         isDocked = false; // Update state to not docked
-      } else {
-        // Card is still detected but not new
-        Serial.println("Card present, within docked duration.");
+        nfcDetected = false; // Reset NFC detection status
       }
-    } else {
-      Serial.println("No card present.");
     }
   }
 
+  //update LCD display based on NFC detection and phone status
+  lcd.setCursor(0, 0);
+  if(nfcDetected){
+    lcd.print("Car unlocked");
+  }else{
+    lcd.print("Please scan NFC");
+  }
+
+  lcd.setCursor(0, 1);
+  if(phoneOnNFC){
+    lcd.print("Drive Enabled");
+  }else{
+    lcd.print("No phone detected");
+  }
+
+  delay(500);
+  lcd.clear();
+
   checkForClientRequest();
-  Serial.println("done...");
+  // Serial.println("done...");
   delay(1000); // Control the loop frequency
 }
 
